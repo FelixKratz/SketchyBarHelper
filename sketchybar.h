@@ -63,7 +63,6 @@ void mach_receive_message(mach_port_t port, struct mach_buffer* buffer, bool tim
 
 char* mach_send_message(mach_port_t port, char* message, uint32_t len, bool await_response) {
   if (!message || !port) {
-    if (message) free(message);
     return NULL;
   }
 
@@ -91,21 +90,14 @@ char* mach_send_message(mach_port_t port, char* message, uint32_t len, bool awai
                                               MACH_MSG_TYPE_MAKE_SEND_ONCE,
                                               0,
                                               MACH_MSGH_BITS_COMPLEX       );
-  } else {
-    msg.header.msgh_bits = MACH_MSGH_BITS_SET(MACH_MSG_TYPE_MOVE_SEND_ONCE
-                                              & MACH_MSGH_BITS_REMOTE_MASK,
-                                              0,
-                                              0,
-                                              MACH_MSGH_BITS_COMPLEX       );
   }
 
   msg.header.msgh_size = sizeof(struct mach_message);
-
   msg.msgh_descriptor_count = 1;
   msg.descriptor.address = message;
   msg.descriptor.size = len * sizeof(char);
   msg.descriptor.copy = MACH_MSG_VIRTUAL_COPY;
-  msg.descriptor.deallocate = await_response;
+  msg.descriptor.deallocate = false;
   msg.descriptor.type = MACH_MSG_OOL_DESCRIPTOR;
 
   mach_msg(&msg.header,
@@ -129,7 +121,7 @@ char* mach_send_message(mach_port_t port, char* message, uint32_t len, bool awai
 
 char* sketchybar(char* message) {
   uint32_t message_length = strlen(message) + 1;
-  char* formatted_message = (char*)malloc((sizeof(char)*(message_length + 1)));
+  char formatted_message[message_length + 1];
   memcpy(formatted_message, message, message_length);
 
   for (int i = 0; i < message_length; ++i) {
