@@ -116,17 +116,25 @@ char* mach_send_message(mach_port_t port, char* message, uint32_t len) {
 char* sketchybar(char* message) {
   uint32_t message_length = strlen(message) + 1;
   char formatted_message[message_length + 1];
-  memcpy(formatted_message, message, message_length);
 
+  char quote = '\0';
+  uint32_t caret = 0;
   for (int i = 0; i < message_length; ++i) {
-    if (message[i] == ' ') formatted_message[i] = '\0';
+    if (message[i] == '"' || message[i] == '\'') {
+      if (quote == message[i]) quote = '\0';
+      else quote = message[i];
+      continue;
+    }
+    formatted_message[caret] = message[i];
+    if (message[i] == ' ' && !quote) formatted_message[caret] = '\0';
+    caret++;
   }
 
   formatted_message[message_length] = '\0';
 
   char* response = mach_send_message(mach_get_bs_port(),
                                      formatted_message,
-                                     message_length + 1 );
+                                     message_length + 1);
 
   if (response) return response;
   else return (char*)"";
