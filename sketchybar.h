@@ -130,11 +130,11 @@ char* sketchybar(char* message) {
     caret++;
   }
 
-  formatted_message[message_length] = '\0';
+  formatted_message[++caret] = '\0';
 
   char* response = mach_send_message(mach_get_bs_port(),
                                      formatted_message,
-                                     message_length + 1);
+                                     caret + 1          );
 
   if (response) return response;
   else return (char*)"";

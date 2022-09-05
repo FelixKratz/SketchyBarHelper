@@ -22,7 +22,7 @@ int main (int argc, char** argv) {
   clock_init(&g_clock);
 
   CFRunLoopTimerRef timer = CFRunLoopTimerCreate(NULL,
-                                                 CFAbsoluteTimeGetCurrent()+2.,
+                                                 CFAbsoluteTimeGetCurrent(),
                                                  2.,
                                                  0,
                                                  0,
