@@ -16,7 +16,7 @@ struct mach_buffer {
   mach_msg_trailer_t trailer;
 };
 
-mach_port_t mach_get_bs_port() {
+static inline mach_port_t mach_get_bs_port() {
   mach_port_name_t task = mach_task_self();
 
   mach_port_t bs_port;
@@ -36,7 +36,7 @@ mach_port_t mach_get_bs_port() {
   return port;
 }
 
-void mach_receive_message(mach_port_t port, struct mach_buffer* buffer, bool timeout) {
+static inline void mach_receive_message(mach_port_t port, struct mach_buffer* buffer, bool timeout) {
   *buffer = (struct mach_buffer) { 0 };
   mach_msg_return_t msg_return;
   if (timeout)
@@ -61,7 +61,7 @@ void mach_receive_message(mach_port_t port, struct mach_buffer* buffer, bool tim
   }
 }
 
-char* mach_send_message(mach_port_t port, char* message, uint32_t len) {
+static inline char* mach_send_message(mach_port_t port, char* message, uint32_t len) {
   if (!message || !port) {
     return NULL;
   }
@@ -113,7 +113,7 @@ char* mach_send_message(mach_port_t port, char* message, uint32_t len) {
   return NULL;
 }
 
-char* sketchybar(char* message) {
+static inline char* sketchybar(char* message) {
   uint32_t message_length = strlen(message) + 1;
   char formatted_message[message_length + 1];
 
@@ -130,8 +130,12 @@ char* sketchybar(char* message) {
     caret++;
   }
 
-  formatted_message[++caret] = '\0';
+  if (caret > 0 && formatted_message[caret] == '\0'
+      && formatted_message[caret - 1] == '\0') {
+    caret--;
+  }
 
+  formatted_message[caret] = '\0';
   char* response = mach_send_message(mach_get_bs_port(),
                                      formatted_message,
                                      caret + 1          );

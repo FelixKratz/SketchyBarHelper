@@ -11,8 +11,8 @@ void handler() {
   clock_update(&g_clock);
 
   if (strlen(g_cpu.command) > 0 && strlen(g_clock.command) > 0) {
-    char command[300];
-    snprintf(command, 300, "%s %s", g_cpu.command, g_clock.command);
+    char command[512];
+    snprintf(command, 512, "%s %s", g_cpu.command, g_clock.command);
     sketchybar(command);
   }
 }
