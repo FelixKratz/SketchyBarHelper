@@ -48,3 +48,17 @@ killall helper
 cd $HOME/.config/sketchybar/helper && make
 $HOME/.config/sketchybar/helper/helper $HELPER &
 ```
+
+## Example
+Run the binary
+```bash
+./helper test
+```
+and add an item to your sketchybar like so:
+```bash
+sketchybar --add item front_app_mach left \
+           --set front_app_mach mach_helper=test \
+           --subscribe front_app_mach front_app_switched
+```
+and note how the item communicates with the helper to handle the
+`front_app_switched` event

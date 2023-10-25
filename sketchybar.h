@@ -35,6 +35,7 @@ struct mach_server {
 
 static struct mach_server g_mach_server;
 static mach_port_t g_mach_port = 0;
+static char* g_response = NULL;
 
 static inline char* env_get_value_for_key(env env, char* key) {
   uint32_t caret = 0;
@@ -140,11 +141,21 @@ static inline char* mach_send_message(mach_port_t port, char* message, uint32_t 
 
   struct mach_buffer buffer = { 0 };
   mach_receive_message(response_port, &buffer, true);
-  if (buffer.message.descriptor.address)
-    return (char*)buffer.message.descriptor.address;
-  mach_msg_destroy(&buffer.message.header);
 
-  return NULL;
+  if (buffer.message.descriptor.address) {
+    g_response = (char*)realloc(g_response, strlen(buffer.message.descriptor.address) + 1);
+    memcpy(g_response, buffer.message.descriptor.address,
+           strlen(buffer.message.descriptor.address) + 1);
+  } else {
+    g_response = (char*)realloc(g_response, 1);
+    *g_response = '\0';
+  }
+
+  mach_msg_destroy(&buffer.message.header);
+  mach_port_mod_refs(task, response_port, MACH_PORT_RIGHT_RECEIVE, -1);
+  mach_port_deallocate(task, response_port);
+
+  return g_response;
 }
 
 #pragma clang diagnostic push
