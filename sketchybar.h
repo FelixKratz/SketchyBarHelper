@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 typedef char* env;
 
@@ -80,7 +81,7 @@ static inline void mach_receive_message(mach_port_t port, struct mach_buffer* bu
                           0,
                           sizeof(struct mach_buffer),
                           port,
-                          100,
+                          1000,
                           MACH_PORT_NULL             );
   else 
     msg_return = mach_msg(&buffer->message.header,
@@ -169,6 +170,17 @@ static inline bool mach_server_begin(struct mach_server* mach_server, mach_handl
     return false;
   }
 
+  struct mach_port_limits limits = {};
+  limits.mpl_qlimit = MACH_PORT_QLIMIT_LARGE;
+
+  if (mach_port_set_attributes(mach_server->task,
+                               mach_server->port,
+                               MACH_PORT_LIMITS_INFO,
+                               (mach_port_info_t)&limits,
+                               MACH_PORT_LIMITS_INFO_COUNT) != KERN_SUCCESS) {
+    return false;
+  }
+
   if (mach_port_insert_right(mach_server->task,
                              mach_server->port,
                              mach_server->port,
@@ -192,7 +204,13 @@ static inline bool mach_server_begin(struct mach_server* mach_server, mach_handl
   mach_server->is_running = true;
   struct mach_buffer buffer;
   while (mach_server->is_running) {
-    mach_receive_message(mach_server->port, &buffer, false);
+    mach_receive_message(mach_server->port, &buffer, true);
+    if (getppid() == 1) exit(0);
+    if (!buffer.message.descriptor.address) continue;
+    if (*(char*)buffer.message.descriptor.address == 'k'
+        && buffer.message.descriptor.size == 2) {
+      exit(0);
+    }
     mach_server->handler((env)buffer.message.descriptor.address);
     mach_msg_destroy(&buffer.message.header);
   }
